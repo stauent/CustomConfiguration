@@ -61,16 +61,6 @@ namespace ConfigurationAssistant
             return (hostBuilder);
         }
 
-
-        public static void ConfigureWebCustomLogging(HostBuilderContext hostingContext, ILoggingBuilder logging, IUserConfiguration userConfiguration)
-        {
-            IDictionary<object, object> properties = new ConcurrentDictionary<object, object>();
-            HostBuilderContext hostBuilderContext = new HostBuilderContext(properties) { HostingEnvironment = hostingContext.HostingEnvironment, Configuration = hostingContext.Configuration };
-
-            ConsoleHostBuilderHelper.ConfigureCustomLogging(hostBuilderContext, logging, userConfiguration);
-
-        }
-
         public static void ConfigureCustomLogging(HostBuilderContext hostingContext, ILoggingBuilder logging, IUserConfiguration userConfiguration)
         {
             logging.ClearProviders();
