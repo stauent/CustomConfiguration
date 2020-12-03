@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using log4net;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,39 +55,54 @@ namespace ConfigurationAssistant
                 })
                 .ConfigureLogging((hostingContext, logging) =>
                 {
-                    logging.ClearProviders();
-
-                    if (userConfiguration.IsLoggingEnabled)
-                    {
-                        logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-
-                        if (userConfiguration.IsLoggerEnabled(EnabledLoggersEnum.Debug))
-                            logging.AddDebug();
-
-                        if (userConfiguration.IsLoggerEnabled(EnabledLoggersEnum.Console))
-                            logging.AddConsole();
-
-                        if (userConfiguration.IsLoggerEnabled(EnabledLoggersEnum.File))
-                        {
-                            // Must set the log name prior to adding Log4Net because it must know this value
-                            // before it loads the config file. It does pattern matching and substitution on the filename.
-                            string logName = $"{typeof(TApp).Name}.log";
-                            if (!string.IsNullOrEmpty(userConfiguration.LogPath))
-                            {
-                                if (!Directory.Exists(userConfiguration.LogPath))
-                                {
-                                    Directory.CreateDirectory(userConfiguration.LogPath);
-                                }
-
-                                logName = $"{userConfiguration.LogPath}\\{logName}";
-                            }
-                            log4net.GlobalContext.Properties["LogName"] = logName;
-                            logging.AddLog4Net("log4net.config");
-                        }
-                    }
+                    ConfigureCustomLogging(hostingContext, logging, userConfiguration);
                 });
 
             return (hostBuilder);
+        }
+
+
+        public static void ConfigureWebCustomLogging(HostBuilderContext hostingContext, ILoggingBuilder logging, IUserConfiguration userConfiguration)
+        {
+            IDictionary<object, object> properties = new ConcurrentDictionary<object, object>();
+            HostBuilderContext hostBuilderContext = new HostBuilderContext(properties) { HostingEnvironment = hostingContext.HostingEnvironment, Configuration = hostingContext.Configuration };
+
+            ConsoleHostBuilderHelper.ConfigureCustomLogging(hostBuilderContext, logging, userConfiguration);
+
+        }
+
+        public static void ConfigureCustomLogging(HostBuilderContext hostingContext, ILoggingBuilder logging, IUserConfiguration userConfiguration)
+        {
+            logging.ClearProviders();
+
+            if (userConfiguration.IsLoggingEnabled)
+            {
+                logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+
+                if (userConfiguration.IsLoggerEnabled(EnabledLoggersEnum.Debug))
+                    logging.AddDebug();
+
+                if (userConfiguration.IsLoggerEnabled(EnabledLoggersEnum.Console))
+                    logging.AddConsole();
+
+                if (userConfiguration.IsLoggerEnabled(EnabledLoggersEnum.File))
+                {
+                    // Must set the log name prior to adding Log4Net because it must know this value
+                    // before it loads the config file. It does pattern matching and substitution on the filename.
+                    string logName = $"{userConfiguration.LogName}.log";
+                    if (!string.IsNullOrEmpty(userConfiguration.LogPath))
+                    {
+                        if (!Directory.Exists(userConfiguration.LogPath))
+                        {
+                            Directory.CreateDirectory(userConfiguration.LogPath);
+                        }
+
+                        logName = $"{userConfiguration.LogPath}\\{logName}";
+                    }
+                    log4net.GlobalContext.Properties["LogName"] = logName;
+                    logging.AddLog4Net("log4net.config");
+                }
+            }
         }
 
         /// <summary>

@@ -62,8 +62,7 @@ namespace CustomConfiguration
             /// <returns></returns>
             internal async Task DoWork()
             {
-                IUserConfiguration userConfiguration = ConfigFactory.Initialize<Program>();
-                string result = JsonConvert.SerializeObject(userConfiguration, Formatting.Indented);
+                string result = JsonConvert.SerializeObject(_userConfiguration, Formatting.Indented);
 
                 _logger.LogInformation($"{result}");
             }
