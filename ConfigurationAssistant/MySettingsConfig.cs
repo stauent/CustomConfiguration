@@ -310,4 +310,5 @@ namespace ConfigurationAssistant
             return config.ConnectionString(DatabaseName);
         }
     }
+
 }

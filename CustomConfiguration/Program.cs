@@ -20,52 +20,45 @@ namespace CustomConfiguration
             configuredApplication = ConsoleHostBuilderHelper.CreateApp<MyApplication>(args);
             await configuredApplication.myService.Run();
         }
+    }
 
-        public class MyApplication
+
+    public class MyApplication
+    {
+        private readonly IApplicationRequirements<MyApplication> _requirements;
+
+        /// <summary>
+        /// Application initialization.
+        /// </summary>
+        /// <param name="requirements">IApplicationRequirements contains all the other interfaces that the application needs</param>
+        public MyApplication(IApplicationRequirements<MyApplication> requirements)
         {
-            private readonly IUserConfiguration _userConfiguration = null;
-            private readonly ILogger _logger;
+            _requirements = requirements;
+        }
 
+        /// <summary>
+        /// This is the application entry point. 
+        /// </summary>
+        /// <returns></returns>
+        internal async Task Run()
+        {
+            $"Application Started at {DateTime.UtcNow}".TraceInformation("Run initiated");
 
-            /// <summary>
-            /// Application initialization. 
-            /// </summary>
-            /// <param name="logger">Used to log information at runtime. Supplied by DI</param>
-            /// <param name="userConfiguration">User configuration from appsettings.json/secrets.json. Supplied by DI</param>
-            public MyApplication(ILogger<MyApplication> logger, IUserConfiguration userConfiguration)
-            {
-                _logger = logger;
+            await DoWork();
 
-                // Get the configuration needed for this demo. It assumes user secrets defined in the current entry assembly.
-                _userConfiguration = userConfiguration;
-            }
+            $"Application Ended at {DateTime.UtcNow}".TraceInformation();
 
-            /// <summary>
-            /// This is the application entry point. 
-            /// </summary>
-            /// <returns></returns>
-            internal async Task Run()
-            {
-                _logger.LogInformation("Application {applicationEvent} at {dateTime}", "Started", DateTime.UtcNow);
+            Console.WriteLine("PRESS <ENTER> TO EXIT");
+            Console.ReadKey();
+        }
 
-                await DoWork();
-
-                _logger.LogInformation("Application {applicationEvent} at {dateTime}", "Ended", DateTime.UtcNow);
-
-                Console.WriteLine("PRESS <ENTER> TO EXIT");
-                Console.ReadKey();
-            }
-
-            /// <summary>
-            /// All tests/work are performed here
-            /// </summary>
-            /// <returns></returns>
-            internal async Task DoWork()
-            {
-                string result = JsonConvert.SerializeObject(_userConfiguration, Formatting.Indented);
-
-                _logger.LogInformation($"{result}");
-            }
+        /// <summary>
+        /// All tests/work are performed here
+        /// </summary>
+        /// <returns></returns>
+        internal async Task DoWork()
+        {
+            _requirements.UserConfiguration.TraceInformation("Here's my user configuration");
         }
     }
 }

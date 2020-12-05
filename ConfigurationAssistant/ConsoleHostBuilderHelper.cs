@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using log4net;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+
+using System.IO;
 
 
 namespace ConfigurationAssistant
@@ -47,6 +44,7 @@ namespace ConfigurationAssistant
 
                     services
                         .AddTransient<TApp>()
+                        .AddSingleton<IApplicationRequirements<TApp>, ApplicationRequirements<TApp>>()
                         .AddSingleton<IUserConfiguration> (sp =>
                                 {
                                     return (userConfiguration);
@@ -119,5 +117,6 @@ namespace ConfigurationAssistant
         }
 
     }
+
 
 }
