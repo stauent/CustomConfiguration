@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -35,10 +36,17 @@ namespace ConfigurationAssistant
 
         public ApplicationRequirements(ILogger<T> applicationLogger, IUserConfiguration userConfiguration, IConfiguration applicationConfiguration)
         {
-            this.UserConfiguration = userConfiguration;
-            this.ApplicationLogger = applicationLogger;
-            this.ApplicationConfiguration = applicationConfiguration;
-            TraceLoggerExtension._Logger = applicationLogger;
+            try
+            {
+                this.UserConfiguration = userConfiguration;
+                this.ApplicationLogger = applicationLogger;
+                this.ApplicationConfiguration = applicationConfiguration;
+                TraceLoggerExtension._Logger = applicationLogger;
+                TraceLoggerExtension._SerializationFormat = applicationConfiguration.GetValue<TraceLoggerExtension.ObjectSerializationFormat>("ObjectSerializationFormat");
+            }
+            catch
+            {
+            }
         }
     }
 
@@ -50,7 +58,16 @@ namespace ConfigurationAssistant
     /// </summary>
     public static class TraceLoggerExtension
     {
-        public static ILogger _Logger { get; set; }
+        private static ILogger _logger = null;
+        public static ILogger _Logger
+        {
+            get { return (_logger);}
+            set
+            {
+                if (_logger == null)
+                    _logger = value;
+            }
+        }
 
         public static ObjectSerializationFormat _SerializationFormat { get; set; } = ObjectSerializationFormat.Json;
 
@@ -62,44 +79,47 @@ namespace ConfigurationAssistant
 
         public static void TraceInformation(this object objectToTrace, string message = null, [CallerLineNumber] int LineNumber = 0, [CallerMemberName] string MethodName = null, [CallerFilePath] string FileName = null)
         {
-            _Logger.LogInformation($"{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n{ConvertToString(objectToTrace)}");
+            _Logger?.LogInformation($"\r\n\t{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n\t{ConvertToString(objectToTrace)}");
         }
         public static void TraceCritical(this object objectToTrace, string message = null, [CallerLineNumber] int LineNumber = 0, [CallerMemberName] string MethodName = null, [CallerFilePath] string FileName = null)
         {
-            _Logger.LogCritical($"{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n{ConvertToString(objectToTrace)}");
+            _Logger?.LogCritical($"\r\n\t{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n\t{ConvertToString(objectToTrace)}");
         }
         public static void TraceDebug(this object objectToTrace, string message = null, [CallerLineNumber] int LineNumber = 0, [CallerMemberName] string MethodName = null, [CallerFilePath] string FileName = null)
         {
-            _Logger.LogDebug($"{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n{ConvertToString(objectToTrace)}");
+            _Logger?.LogDebug($"\r\n\t{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n\t{ConvertToString(objectToTrace)}");
         }
         public static void TraceError(this object objectToTrace, string message = null, [CallerLineNumber] int LineNumber = 0, [CallerMemberName] string MethodName = null, [CallerFilePath] string FileName = null)
         {
-            _Logger.LogError($"{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n{ConvertToString(objectToTrace)}");
+            _Logger?.LogError($"\r\n\t{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n\t{ConvertToString(objectToTrace)}");
         }
         public static void TraceWarning(this object objectToTrace, string message = null, [CallerLineNumber] int LineNumber = 0, [CallerMemberName] string MethodName = null, [CallerFilePath] string FileName = null)
         {
-            _Logger.LogWarning($"{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n{ConvertToString(objectToTrace)}");
+            _Logger?.LogWarning($"\r\n\t{FileName}:{MethodName}:{LineNumber} {message ?? ""}\r\n\t{ConvertToString(objectToTrace)}");
         }
 
         static string ConvertToString(object objectToTrace)
         {
-            JsonSerializerSettings jSettings = new JsonSerializerSettings()
-            {
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                MaxDepth = 1
-            };
-
             string retVal = "";
             if (objectToTrace != null)
             {
-                switch (_SerializationFormat)
+                JsonSerializerSettings jSettings = new JsonSerializerSettings()
                 {
-                    case ObjectSerializationFormat.Json:
-                        retVal = JsonConvert.SerializeObject(objectToTrace, Formatting.Indented, jSettings);
-                        break;
-                    case ObjectSerializationFormat.String:
-                        retVal = retVal.ToString();
-                        break;
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    MaxDepth = 1
+                };
+
+                if (objectToTrace != null)
+                {
+                    switch (_SerializationFormat)
+                    {
+                        case ObjectSerializationFormat.Json:
+                            retVal = JsonConvert.SerializeObject(objectToTrace, Formatting.Indented, jSettings);
+                            break;
+                        case ObjectSerializationFormat.String:
+                            retVal = retVal.ToString();
+                            break;
+                    }
                 }
             }
 

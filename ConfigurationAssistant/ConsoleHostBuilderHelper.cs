@@ -116,7 +116,13 @@ namespace ConfigurationAssistant
             return (config);
         }
 
+        public static IApplicationRequirements<TApp> CreateApplicationRequirements<TApp>(string[] args, ConfigureLocalServices<TApp> localServiceConfiguration = null) where TApp : class
+        {
+            ConfigurationResults<TApp> config = new ConfigurationResults<TApp>();
+            config.builder = CreateHostBuilder<TApp>(args, localServiceConfiguration);
+            config.myHost = config.builder.Build();
+            IApplicationRequirements<TApp> requirements = config.myHost.Services.GetRequiredService<IApplicationRequirements<TApp>>();
+            return (requirements);
+        }
     }
-
-
 }
