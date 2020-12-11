@@ -59,6 +59,9 @@ namespace CustomConfiguration
         internal async Task DoWork()
         {
             _requirements.UserConfiguration.TraceInformation("Here's my user configuration");
+
+            string cs = _requirements.UserConfiguration.ConnectionString("CareerCloud");
+            Console.WriteLine($"CareerCloud connection string:\r\n{cs}");
         }
     }
 }
